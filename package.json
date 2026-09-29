@@ -1,0 +1,41 @@
+{
+  "name": "sine-bot",
+  "version": "1.0.0",
+  "description": "Open-source Solana trading bot built on Fourier analysis of price rhythms, with fully configurable strategies.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "solana",
+    "trading-bot",
+    "fourier",
+    "fft",
+    "spectrogram",
+    "jupiter",
+    "backtesting"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sine": "node --no-deprecation --import tsx src/index.ts",
+    "analyze": "node --no-deprecation --import tsx src/index.ts analyze",
+    "backtest": "node --no-deprecation --import tsx src/index.ts backtest",
+    "compare": "node --no-deprecation --import tsx src/index.ts compare",
+    "validate": "node --no-deprecation --import tsx src/index.ts validate",
+    "selftest": "node --no-deprecation --import tsx src/index.ts selftest",
+    "start": "node --no-deprecation --import tsx src/index.ts run",
+    "test": "node --no-deprecation --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0",
+    "dotenv": "^16.4.5",
+    "yaml": "^2.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

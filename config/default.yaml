@@ -1,0 +1,112 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  sine-bot configuration
+#
+#  Every rule the bot follows lives in this file. Copy it, change what you like,
+#  and point the bot at your copy:   npm run sine -- backtest JUP --config my.yaml
+#
+#  Start from a preset instead:       extends: presets/swing
+#  (then list only the settings you want to change; everything else is inherited)
+#
+#  Glossary
+#    rhythm      a repeating swing in price found by the Fourier transform
+#    strength    0 none · 1 weak · 2 moderate · 3 strong · 4 very strong
+#    phase       where price is in the main rhythm: 0 = trough, 0.5 = crest, 1 = trough again
+#    projection  the trend + rhythms extended forward "if the pattern holds"
+#    skill       projection accuracy vs. assuming the price stays put (>0 = better)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: balanced
+
+market:
+  interval: 15m          # candle size: 1s 15s 30s (CoinGecko Pro only) · 1m 5m 15m 1h 4h 12h 1d
+  windowCandles: 512     # candles analyzed each time; power of two: 64 128 256 512 1024 2048
+  evaluateEvery: 1       # re-run the analysis every N candles (raise to speed up long backtests)
+
+# Tokens the bot may trade (mint address + a short label). Verify every mint yourself.
+watchlist:
+  - { mint: JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN, label: JUP }
+  - { mint: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263, label: BONK }
+
+# Mints the bot must NEVER trade. If you issue a token, put it here: a deployer's bot trading
+# its own token looks like wash trading or price manipulation and is illegal in many places.
+blocklist: []
+
+analysis:
+  nPeaks: 3              # how many rhythms to extract
+  minCycles: 2           # a rhythm must complete at least this many cycles in the window
+
+# ── When to BUY. Every enabled condition must be true. ─────────────────────
+entry:
+  minStrength: 2         # minimum rhythm strength (0–4)
+  minCyclesSeen: 3       # the main rhythm must have repeated at least this many times
+
+  persistence:           # from the spectrogram: was the rhythm there the whole time?
+    min: 0.5             # share of the window it was clearly present (0–1); null to ignore.
+                         # Needs the main rhythm to repeat ≥ 4 times in the window, otherwise the
+                         # entry is skipped ("too slow for the persistence check").
+    requireStrengthening: false
+
+  phase:                 # buy only in this part of the cycle (wraps: 0.9 → 0.2 = around the trough)
+    enabled: true
+    from: 0.9
+    to: 0.2
+    requireRising: true  # and only once the cycle has turned up
+
+  trend:                 # % per day of the underlying drift; null = no limit
+    minPctPerDay: null
+    maxPctPerDay: null
+
+  projection:            # "if the pattern holds" projection and its walk-forward track record
+    enabled: true
+    requireTested: true  # skip if there wasn't enough history to test the projection
+    minSkill: 0.1        # must beat "no change" by at least 10%
+    minHitRate: 0.55     # direction right in at least 55% of past checks
+    minUpsidePct: 2      # projected high at least this far above the price
+    minRewardRisk: 1.2   # projected upside ÷ stop-loss distance
+
+  costMultiple: 3        # expected move must exceed this × round-trip fees + slippage
+
+# ── When to SELL. The first rule that triggers wins. ───────────────────────
+exit:
+  stopLossPct: 6
+  takeProfitPct: null        # fixed take-profit %; null = off
+  trailingStopPct: null      # e.g. 4 = sell if price falls 4% from its high since entry
+  atProjectedHigh:
+    enabled: true            # sell near the projected high captured at entry
+    bufferPct: 0.5           # …this many % below it
+  onCycleTurn: true          # sell once the cycle passes its crest
+  onStrengthBelow: 1         # sell if rhythm strength drops below this; null = off
+  maxHoldCycles: 0.75        # never hold longer than this many main cycles
+
+# ── How much to buy ────────────────────────────────────────────────────────
+sizing:
+  mode: fixed            # fixed | percent | risk
+  fixedSol: 0.1          # fixed: SOL per trade
+  percentOfBalance: 5    # percent: % of SOL balance per trade
+  riskPercent: 1         # risk: size so a stop-loss costs this % of balance
+  minSol: 0.01
+  maxSol: 1
+
+# ── Account-level protection ───────────────────────────────────────────────
+risk:
+  maxOpenPositions: 3
+  dailyLossLimitSol: 0.5 # stop opening trades for the day (UTC) after losing this much
+  cooldownBars: 4        # candles to wait after closing a trade before re-entering that token
+  minLiquidityUsd: 100000
+  minSolReserve: 0.05    # always keep this much SOL for fees
+
+# ── Trade execution (Jupiter) ──────────────────────────────────────────────
+execution:
+  mode: paper            # paper | live — live ALSO needs LIVE_TRADING=true in your environment
+  slippageBps: 100       # max slippage allowed per swap (1% = 100 bps)
+  expectedSlippageBps: 20 # typical slippage, used for cost estimates and backtests
+  feeBps: 30             # typical DEX fee per swap
+  maxPriceImpactPct: 1
+  priorityFeeMaxLamports: 1000000
+
+backtest:
+  startingBalanceSol: 10 # also the starting balance for paper trading
+  candles: 3000
+
+logging:
+  explain: true          # log a plain-English reading of the analysis on every entry

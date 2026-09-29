@@ -1,0 +1,18 @@
+# Scalper: short rhythms on 1-minute candles. Costs matter most here — keep costMultiple high.
+extends: ../default
+name: scalper
+market: { interval: 1m, windowCandles: 256 }
+entry:
+  minStrength: 3
+  minCyclesSeen: 6
+  persistence: { min: 0.7 }
+  phase: { from: 0.9, to: 0.15, requireRising: true }
+  projection: { minSkill: 0.2, minHitRate: 0.6, minUpsidePct: 1, minRewardRisk: 1.3 }
+  costMultiple: 4
+exit:
+  stopLossPct: 1.5
+  trailingStopPct: 1
+  atProjectedHigh: { enabled: true, bufferPct: 0.2 }
+  maxHoldCycles: 0.6
+risk: { cooldownBars: 10 }
+execution: { slippageBps: 50 }

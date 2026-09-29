@@ -1,0 +1,14 @@
+# Swing: ride clear multi-hour rhythms from near a trough to near the projected high.
+extends: ../default
+name: swing
+market: { interval: 15m, windowCandles: 512 }
+entry:
+  minStrength: 3
+  persistence: { min: 0.6 }
+  phase: { from: 0.85, to: 0.2, requireRising: true }
+  projection: { minSkill: 0.15, minHitRate: 0.6, minUpsidePct: 3, minRewardRisk: 1.5 }
+exit:
+  stopLossPct: 5
+  atProjectedHigh: { enabled: true, bufferPct: 0.5 }
+  onCycleTurn: true
+  maxHoldCycles: 0.75

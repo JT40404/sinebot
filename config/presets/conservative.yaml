@@ -1,0 +1,16 @@
+# Conservative: hourly candles, only very steady rhythms with a proven track record, small risk.
+extends: ../default
+name: conservative
+market: { interval: 1h, windowCandles: 512 }
+entry:
+  minStrength: 3
+  minCyclesSeen: 5
+  persistence: { min: 0.7, requireStrengthening: false }
+  phase: { from: 0.9, to: 0.15, requireRising: true }
+  trend: { minPctPerDay: -0.5 }
+  projection: { minSkill: 0.25, minHitRate: 0.65, minUpsidePct: 4, minRewardRisk: 2 }
+exit:
+  stopLossPct: 4
+  onStrengthBelow: 2
+sizing: { mode: risk, riskPercent: 0.5, maxSol: 0.5 }
+risk: { maxOpenPositions: 2, dailyLossLimitSol: 0.2 }

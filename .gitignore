@@ -1,0 +1,10 @@
+node_modules/
+.env
+keys/
+*.keypair.json
+state.json
+trades.csv
+trades-*.csv
+equity-*.csv
+STOP
+.DS_Store
