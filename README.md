@@ -2,6 +2,8 @@
 
 **An open-source Solana trading bot built on Fourier analysis of price rhythms.**
 
+[GitHub](https://github.com/JT40404/sinebot) · [X / @SineWaveSOL](https://x.com/SineWaveSOL)
+
 sine-bot looks for repeating swings in a token's price with a Fourier transform, the same maths audio analyzers use to split sound into notes. It measures how strong and steady those rhythms are and where the price sits in the cycle right now. It projects the pattern forward and **tests that projection against the token's own history** before trusting it. Every rule it trades on is a setting in a commented YAML file, so you can shape it to your own trading style.
 
 > ⚠️ **Read [the disclaimer](#disclaimer) before using real money.** This is experimental software. Crypto trading can lose all of your capital. Paper-trade first. Nothing here is financial advice.
@@ -25,8 +27,8 @@ sine-bot looks for repeating swings in a token's price with a Fourier transform,
 Requires Node.js 20 or newer.
 
 ```bash
-git clone https://github.com/<you>/sine-bot.git
-cd sine-bot
+git clone https://github.com/JT40404/sinebot.git
+cd sinebot
 npm install
 cp .env.example .env        # optionally add a free CoinGecko Demo API key
 
