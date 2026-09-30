@@ -25,11 +25,6 @@ export function explain(s: Snapshot, name = 'This token'): string[] {
       : `Pull-back toward the trend is not clear (Fourier KSS p ≈ ${sg.pMeanReversion.toFixed(2)}): closer to a random walk.`);
   }
   if (sg.pRegimeShift !== null && sg.pRegimeShift <= 0.05) out.push(`A slow regime shift (≈${sg.regimeK.toFixed(1)} of a cycle) was removed before measuring rhythms.`);
-  if (s.stress) {
-    const st = s.stress, mv = st.lastMove * 100;
-    out.push(`Stress check: ${st.label}. Slow moves are ${Math.round(st.share * 100)}% of recent return energy (random churn ≈ ${Math.round(st.expected * 100)}%)` +
-      (st.level > 0 ? `, pressure ${mv >= 0 ? 'upward' : 'downward'} (${mv >= 0 ? '+' : ''}${mv.toFixed(1)}% over ${st.L} candles).` : '.'));
-  }
   if (s.persistence) {
     const p = s.persistence;
     out.push(`Over time it was clearly present in ${Math.round(p.share * 100)}% of the window${p.change >= 1.4 ? ' and has been strengthening' : p.change <= 0.7 ? ' and has been fading' : ''}.`);

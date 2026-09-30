@@ -15,7 +15,6 @@
 #    skill       projection accuracy vs. assuming the price stays put (>0 = better)
 #    p-value     how often 200 simulated random walks produce something at least this strong
 #                (small = unlikely to be chance; 0.05 = 1 in 20)
-#    stress      share of recent return energy in slow, one-directional moves (calm / elevated / high)
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: balanced
@@ -40,7 +39,7 @@ analysis:
 
 # ── When to BUY. Every enabled condition must be true. ─────────────────────
 entry:
-  minStrength: 2         # minimum rhythm strength (0–4)
+  minStrength: 1         # minimum rhythm strength (0–4); 1 = weak or better, same scale as the website
   minCyclesSeen: 3       # the main rhythm must have repeated at least this many times
 
   persistence:           # from the spectrogram: was the rhythm there the whole time?
@@ -51,8 +50,8 @@ entry:
 
   phase:                 # buy only in this part of the cycle (wraps: 0.9 → 0.2 = around the trough)
     enabled: true
-    from: 0.9
-    to: 0.2
+    from: 0.85
+    to: 0.25
     requireRising: true  # and only once the cycle has turned up
 
   trend:                 # % per day of the underlying drift; null = no limit
@@ -61,28 +60,25 @@ entry:
 
   projection:            # "if the pattern holds" projection and its walk-forward track record
     enabled: true
-    requireTested: true  # skip if there wasn't enough history to test the projection
-    minSkill: 0.1        # must beat "no change" by at least 10%
-    minHitRate: 0.55     # direction right in at least 55% of past checks
-    minUpsidePct: 2      # projected high at least this far above the price
-    minRewardRisk: 1.2   # projected upside ÷ stop-loss distance
+    requireTested: false # true = skip if there wasn't enough history to test the projection
+    minSkill: 0.0        # must at least match "no change" (0.1 = beat it by 10%)
+    minHitRate: 0.5      # direction right in at least half of past checks
+    minUpsidePct: 1      # projected high at least this far above the price
+    minRewardRisk: 0.8   # projected upside ÷ stop-loss distance
 
   significance:          # is the rhythm real, or a random walk's chance swing? (Öztürk 2025 approach)
-    maxP: 0.1            # skip if random walks produce a rhythm this distinct more than 10% of the time; null = off
+    maxP: 0.3            # skip if random walks produce a rhythm this distinct more than 30% of the time; null = off
+                         # (0.3 matches where the website stops calling it a rhythm at all)
 
   meanReversion:         # Fourier KSS test: does price pull back toward its trend?
     required: false      # true = only trade tokens that measurably mean-revert
     maxP: 0.1
 
-  stress:                # low-frequency surge in returns — pressure building (Jun et al. 2019)
-    block: high          # none | elevated | high — don't buy when stress is at/above this level
-    onlyIfDownward: true # …but only when that pressure is pointing down
-
-  costMultiple: 3        # expected move must exceed this × round-trip fees + slippage
+  costMultiple: 2        # expected move must exceed this × round-trip fees + slippage
 
 # ── When to SELL. The first rule that triggers wins. ───────────────────────
 exit:
-  stopLossPct: 6
+  stopLossPct: 3             # sized for typical crypto rhythm swings (a few % each way)
   takeProfitPct: null        # fixed take-profit %; null = off
   trailingStopPct: null      # e.g. 4 = sell if price falls 4% from its high since entry
   atProjectedHigh:
@@ -91,9 +87,6 @@ exit:
   onCycleTurn: true          # sell once the cycle passes its crest
   onStrengthBelow: 1         # sell if rhythm strength drops below this; null = off
   maxHoldCycles: 0.75        # never hold longer than this many main cycles
-  onStress:                  # sell if the stress check reaches this level while holding
-    level: none              # none | elevated | high
-    onlyIfDownward: true
 
 # ── How much to buy ────────────────────────────────────────────────────────
 sizing:

@@ -62,7 +62,7 @@ test('persistence: steady rhythm ≈ 100%, emerging rhythm reads as strengthenin
   assert.ok(b.change > 1.4 && b.share < 0.9, `emerging change ${b.change} share ${b.share}`);
 });
 
-import { strengthLevel, stressIndex, fourierTrend } from '../src/fourier/index.js';
+import { strengthLevel, fourierTrend } from '../src/fourier/index.js';
 
 test('random walks are not reported as rhythms (significance vs. 200 simulated random walks)', () => {
   const rnd = seeded(31);
@@ -95,13 +95,3 @@ test('Fourier trend removes a slow boom-and-bust so the real rhythm is measured 
   assert.ok(fourierTrend(xs.map(Math.log)).k <= 1.5);
 });
 
-test('stress check: calm on random walks, high when returns turn persistent', () => {
-  const rnd = seeded(21);
-  let high = 0;
-  for (let m = 0; m < 30; m++) { let lp = 0; const xs = Array.from({ length: 512 }, () => Math.exp((lp += 0.01 * gauss(rnd)))); if (stressIndex(xs)!.level === 2) high++; }
-  assert.ok(high <= 2, `random walks flagged high stress: ${high}/30`);
-  let lp = 0, mom = 0;
-  const pressured = Array.from({ length: 512 }, (_, i) => { if (i > 480) mom = 0.85 * mom + 0.004 * gauss(rnd) - 0.006; return Math.exp((lp += 0.006 * gauss(rnd) + mom)); });
-  const st = stressIndex(pressured)!;
-  assert.equal(st.level, 2); assert.ok(st.lastMove < 0);
-});

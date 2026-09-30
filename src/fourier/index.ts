@@ -3,4 +3,3 @@ export { analyze, strengthLevel, fourierTrend, kssT, nullDist, STRENGTH_LABELS, 
 export { harmonicFit, type HarmonicModel } from './harmonics.js';
 export { stft, persistence, type Spectrogram } from './stft.js';
 export { project, type Projection } from './project.js';
-export { stressIndex, STRESS_LABELS, type Stress } from './stress.js';

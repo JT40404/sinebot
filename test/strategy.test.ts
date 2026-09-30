@@ -92,9 +92,9 @@ test('backtest trades a clean rhythm and stays out of pure noise', () => {
   assert.ok(quiet.trades.length <= 2, `noise trades ${quiet.trades.length}`);
 });
 
-import { checkEntry, signalExit } from '../src/strategy/rules.js';
+import { checkEntry } from '../src/strategy/rules.js';
 
-test('new entry filters: random-walk significance, mean reversion and stress', () => {
+test('new entry filters: random-walk significance and mean reversion', () => {
   const cfg = base();
   const closes = Array.from({ length: 512 }, (_, i) => 100 * Math.exp(0.04 * Math.sin((2 * Math.PI * i) / 40)));
   const snap = buildSnapshot(closes, cfg)!;
@@ -103,11 +103,4 @@ test('new entry filters: random-walk significance, mean reversion and stress', (
   const noMR = { ...snap, significance: { ...snap.significance, pMeanReversion: 0.5 } };
   const cfgMR = { ...cfg, entry: { ...cfg.entry, meanReversion: { required: true, maxP: 0.1 } } };
   assert.ok(checkEntry(noMR, cfgMR).reasons.some((r) => r.startsWith('no mean reversion')));
-  const stressed = { ...snap, stress: { ...snap.stress!, level: 2 as const, lastMove: -0.08, label: 'High' } };
-  assert.ok(checkEntry(stressed, cfg).reasons.some((r) => r.startsWith('stress high')));
-  const upward = { ...stressed, stress: { ...stressed.stress, lastMove: 0.08 } };
-  assert.ok(!checkEntry(upward, cfg).reasons.some((r) => r.startsWith('stress')), 'upward pressure is allowed by default');
-  const cfgExit = { ...cfg, exit: { ...cfg.exit, onStress: { level: 'high' as const, onlyIfDownward: true } } };
-  const pos = { entryPrice: 1, entryIndex: 0, sizeSol: 1, stop: 0.9, takeProfit: null, target: null, trailingPct: null, peak: 1, maxHoldBars: 99, entryPhase: 0.1 };
-  assert.equal(signalExit(pos, stressed, 3, cfgExit), 'stress high');
 });

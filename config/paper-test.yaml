@@ -1,0 +1,8 @@
+extends: presets/swing        # or conservative, trend-dips, scalper, default
+name: paper-test
+market: { interval: 15m }
+watchlist:
+  - { mint: pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn, label: PUMP }
+  - { mint: So11111111111111111111111111111111111111112, label: SOL }
+execution: { mode: paper }
+backtest: { startingBalanceSol: 10 }   # your pretend paper balance

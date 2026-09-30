@@ -45,24 +45,6 @@ Following Öztürk (2025), who tested 25 cryptocurrencies against the random-wal
 5. **Ranking.** Significant rhythms with ≥ 3 cycles rank first, then significant 2-cycle swings, then the rest.
 6. **Strength cap from the rhythm p-value:** > 0.30 caps at 0 (none), > 0.15 at 1 (weak), > 0.05 at 2 (moderate).
 
-## 1c. Stress check (`stress.ts`, new in 1.1)
-
-Following Jun, Ahn, Kim & Kim (2019), who found low-frequency components of stock-index returns surging ahead of global financial crises:
-
-1. **Rolling spectrum.** A window of L = 32 log-returns (16 for short series) slides one step at a time, with an FFT at each step.
-2. **Statistic.** The share of return energy in the slowest L/8 modes. Random churn gives about 25%.
-3. **p-value.** A permutation test against the token's own returns in random order, 400 resamples, which keeps fat tails and removes timing.
-4. **History percentile.** Where the current reading sits within the window's own history.
-5. **Level:**
-
-| Level | Condition |
-|---|---|
-| High | p ≤ 0.05 and history percentile ≥ 80% |
-| Elevated | (p ≤ 0.10 or history percentile ≥ 90%) and share above 25% |
-| Calm | otherwise |
-
-When a real rhythm is present (moderate or better), stress is computed after subtracting the least-squares rhythm fit, so a regular cycle's down-swings don't count as building pressure.
-
 ## 2. Exact phase (`harmonics.ts`)
 
 With the frequencies known, a least-squares fit of `y[n] ≈ a + b·n/N + Σ (c_j·cos 2πf_j n + s_j·sin 2πf_j n)` recovers each rhythm's amplitude and phase exactly. The cycle position is `ψ = 2πf·(N−1) − atan2(s, c)`, reported as `phase = (ψ + π)/2π`: 0 is a trough and 0.5 a crest. The rhythm is rising while `ψ < 0`.

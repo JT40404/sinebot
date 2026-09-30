@@ -30,7 +30,7 @@ export const ConfigSchema = z.object({
   }).default({}),
 
   entry: z.object({
-    minStrength: z.number().int().min(0).max(4).default(2),
+    minStrength: z.number().int().min(0).max(4).default(1),
     minCyclesSeen: z.number().min(0).default(3),
     persistence: z.object({
       min: frac(0.5).nullable(),
@@ -38,8 +38,8 @@ export const ConfigSchema = z.object({
     }).default({}),
     phase: z.object({
       enabled: z.boolean().default(true),
-      from: frac(0.9),
-      to: frac(0.2),
+      from: frac(0.85),
+      to: frac(0.25),
       requireRising: z.boolean().default(true),
     }).default({}),
     trend: z.object({
@@ -48,38 +48,30 @@ export const ConfigSchema = z.object({
     }).default({}),
     projection: z.object({
       enabled: z.boolean().default(true),
-      requireTested: z.boolean().default(true),
-      minSkill: z.number().min(-10).max(1).default(0.1),
-      minHitRate: frac(0.55),
-      minUpsidePct: z.number().min(0).default(2),
-      minRewardRisk: z.number().min(0).default(1.2),
+      requireTested: z.boolean().default(false),
+      minSkill: z.number().min(-10).max(1).default(0),
+      minHitRate: frac(0.5),
+      minUpsidePct: z.number().min(0).default(1),
+      minRewardRisk: z.number().min(0).default(0.8),
     }).default({}),
     significance: z.object({                       // rhythm vs. random walks (Öztürk 2025 approach)
-      maxP: z.number().min(0).max(1).nullable().default(0.1),
+      maxP: z.number().min(0).max(1).nullable().default(0.3),
     }).default({}),
     meanReversion: z.object({                      // Fourier KSS: does price pull back toward its trend?
       required: z.boolean().default(false),
       maxP: frac(0.1),
     }).default({}),
-    stress: z.object({                             // low-frequency surge in returns (Jun et al. 2019)
-      block: z.enum(['none', 'elevated', 'high']).default('high'),
-      onlyIfDownward: z.boolean().default(true),
-    }).default({}),
-    costMultiple: z.number().min(0).default(3),
+    costMultiple: z.number().min(0).default(2),
   }).default({}),
 
   exit: z.object({
-    stopLossPct: z.number().positive().max(90).default(6),
+    stopLossPct: z.number().positive().max(90).default(3),
     takeProfitPct: z.number().positive().nullable().default(null),
     trailingStopPct: z.number().positive().max(90).nullable().default(null),
     atProjectedHigh: z.object({ enabled: z.boolean().default(true), bufferPct: pct(0.5) }).default({}),
     onCycleTurn: z.boolean().default(true),
     onStrengthBelow: z.number().int().min(0).max(4).nullable().default(1),
     maxHoldCycles: z.number().positive().default(0.75),
-    onStress: z.object({
-      level: z.enum(['none', 'elevated', 'high']).default('none'),
-      onlyIfDownward: z.boolean().default(true),
-    }).default({}),
   }).default({}),
 
   sizing: z.object({

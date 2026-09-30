@@ -17,7 +17,6 @@ sine-bot looks for repeating swings in a token's price with a Fourier transform,
 | **Measure** | Takes the last *N* candles, removes the trend, windows the data and runs an FFT. It reports the top rhythms: period, amplitude and share of the price movement each explains. |
 | **Rate** | Scores rhythm strength from 0 (none) to 4 (very strong). It marks the score down if the rhythm has only repeated a few times, **or if 200 simulated random walks produce a rhythm this distinct too often** (it could be chance). |
 | **Test for randomness** | *New in 1.1.* Removes slow regime shifts with a Fourier trend, tests whether price pulls back toward its trend (Fourier KSS test), and checks each rhythm against random walks, following Öztürk (2025). |
-| **Stress check** | *New in 1.1.* A rolling Fourier spectrum of returns flags slow, one-directional pressure the rhythms don't explain. This follows Jun et al. (2019), who found this low-frequency surge in stock-index returns ahead of major crises. |
 | **Check persistence** | A spectrogram (sliding FFT) shows whether the rhythm held the whole time, or is emerging or fading. |
 | **Locate** | A least-squares fit gives the exact cycle position: 0 is a trough, 0.5 a crest, rising or falling. |
 | **Project, honestly** | Extends trend + rhythms forward. A walk-forward test at 12 earlier points, each using only the data available then, gives its **skill** vs. "price stays put", its directional **hit rate**, and an 80% error band. |
@@ -96,14 +95,22 @@ These are starting points, not recommendations.
 | Area | Settings |
 |---|---|
 | **Market** | Candle interval (1s–1d; seconds need CoinGecko Pro) · window length · how often to re-analyze |
-| **Entry** | Minimum rhythm strength · repetitions seen · **rhythm significance vs. random walks** · **required mean reversion** · **stress block** (optionally only when pressure is downward) · persistence and "strengthening" · phase window and rising-only · trend limits · projection skill, hit rate, upside, reward/risk · cost margin |
-| **Exit** | Stop-loss · take-profit · trailing stop · sell near projected high · sell when the cycle passes its crest · sell if the rhythm weakens · **sell on stress** · max hold, in cycles |
+| **Entry** | Minimum rhythm strength · repetitions seen · **rhythm significance vs. random walks** · **required mean reversion** · persistence and "strengthening" · phase window and rising-only · trend limits · projection skill, hit rate, upside, reward/risk · cost margin |
+| **Exit** | Stop-loss · take-profit · trailing stop · sell near projected high · sell when the cycle passes its crest · sell if the rhythm weakens · max hold, in cycles |
 | **Sizing** | Fixed SOL · % of balance · risk-based (a stop-out costs X% of balance) · min/max |
 | **Risk** | Max open positions · daily loss limit · cooldown after a trade · minimum pool liquidity · SOL reserve |
 | **Execution** | Paper/live · max slippage · price-impact cap · priority fee |
 | **Safety** | `blocklist`: mints the bot will never touch, checked when the config loads *and* before every swap |
 
-### Tuning with the backtester
+#**Default vs. presets.** The default config (1.3) is tuned to act roughly whenever the SINE website's indicator shows a real rhythm near the bottom of its cycle:
+- **Rhythm rules:** weak-or-better rhythm, significance p ≤ 0.3 against random walks, projection at least matching "no change".
+- **Trade-size rules** sized for typical crypto swings: 3% stop, reward/risk ≥ 0.8, projected upside ≥ 1%, expected move ≥ 2× costs.
+
+On synthetic tests it traded a weak rhythm hidden in a random walk profitably (14 trades, 86% wins) and mostly stayed out of pure random walks. For more caution, use a preset: `swing`, `conservative` or `scalper`. They keep stricter significance, projection and reward/risk rules.
+
+Backtest and paper-trade before using real money.
+
+## Tuning with the backtester
 
 Every backtest lists **why entries were skipped**:
 
@@ -116,38 +123,31 @@ Most common reasons entries were skipped:
 
 This shows which rule is doing the filtering, so you can loosen or tighten it deliberately. Add `--csv` to export every trade and the equity curve.
 
-## New in 1.1: random-walk-aware analysis and a stress check
+## Random-walk-aware analysis (since 1.1)
 
-Two research upgrades, shared with the SINE website so both use the same engine:
+A research upgrade shared with the SINE website, so both use the same engine:
 
 ```yaml
 entry:
   significance:  { maxP: 0.1 }                        # skip rhythms random walks produce >10% of the time
   meanReversion: { required: false, maxP: 0.1 }       # Fourier KSS: only trade tokens that pull back to trend
-  stress:        { block: high, onlyIfDownward: true } # don't buy into building downward pressure
-exit:
-  onStress:      { level: none, onlyIfDownward: true } # optionally sell when stress builds while holding
 ```
 
 **What changed, measured on synthetic data:**
 - **False rhythms on pure random walks:** from 33% to about 13% rated Moderate or better, and to about 2% rated Strong. That's roughly the chance rate.
 - **Real rhythms:** still detected 100% of the time.
-- **Stress check:** catches genuinely building pressure every time, with about 5–10% false alarms on random walks.
-
-With a real rhythm present, stress is measured on what the rhythm doesn't explain, so a cycle's normal down-swings don't block the trough entries it's designed to take.
 
 In backtests, the new rules appear in the skip-reason list, for example "rhythm could be chance: p … vs random walks", so you can see exactly what each filter does. The presets are tuned per style:
 
-| Preset | Rhythm significance | Mean reversion | Stress |
-|---|---|---|---|
-| `conservative` | p ≤ 0.01 | required | blocks any elevated stress |
-| `swing` | p ≤ 0.05 | — | blocks high downward stress |
-| `scalper` | p ≤ 0.05 | — | blocks elevated stress in either direction |
-| `trend-dips` | looser (0.15) | — | — |
+| Preset | Rhythm significance | Mean reversion |
+|---|---|---|
+| `conservative` | p ≤ 0.01 | required |
+| `swing` | p ≤ 0.05 | — |
+| `scalper` | p ≤ 0.05 | — |
+| `trend-dips` | looser (0.15) | — |
 
 Sources:
 - Öztürk, C. (2025). *Istanbul Business Research* 54(3), 374–389. [doi:10.26650/ibr.2025.54.1666799](https://doi.org/10.26650/ibr.2025.54.1666799)
-- Jun, D., Ahn, C., Kim, J. & Kim, G. (2019). *Physica A* 526, 121015. [doi:10.1016/j.physa.2019.04.251](https://doi.org/10.1016/j.physa.2019.04.251)
 
 ## How it works
 
@@ -155,7 +155,7 @@ See **[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md)** for the maths in plain lang
 
 ```
 src/
-  fourier/     fft · analyze (Fourier trend, KSS, random-walk significance) · stress · harmonics · stft · project · stats
+  fourier/     fft · analyze (Fourier trend, KSS, random-walk significance) · harmonics · stft · project · stats
   strategy/    snapshot (features) · rules (entry/exit) · sizing · explain (plain English)
   config/      zod schema with defaults · YAML loader with `extends`
   data/        GeckoTerminal / CoinGecko on-chain candles
