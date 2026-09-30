@@ -3,6 +3,9 @@ extends: ../default
 name: conservative
 market: { interval: 1h, windowCandles: 512 }
 entry:
+  significance: { maxP: 0.01 }
+  meanReversion: { required: true, maxP: 0.05 }
+  stress: { block: elevated, onlyIfDownward: false }
   minStrength: 3
   minCyclesSeen: 5
   persistence: { min: 0.7, requireStrengthening: false }
@@ -10,6 +13,7 @@ entry:
   trend: { minPctPerDay: -0.5 }
   projection: { minSkill: 0.25, minHitRate: 0.65, minUpsidePct: 4, minRewardRisk: 2 }
 exit:
+  onStress: { level: elevated, onlyIfDownward: true }
   stopLossPct: 4
   onStrengthBelow: 2
 sizing: { mode: risk, riskPercent: 0.5, maxSol: 0.5 }

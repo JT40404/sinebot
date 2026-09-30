@@ -3,11 +3,14 @@ extends: ../default
 name: swing
 market: { interval: 15m, windowCandles: 512 }
 entry:
+  significance: { maxP: 0.05 }
+  stress: { block: high, onlyIfDownward: true }
   minStrength: 3
   persistence: { min: 0.6 }
   phase: { from: 0.85, to: 0.2, requireRising: true }
   projection: { minSkill: 0.15, minHitRate: 0.6, minUpsidePct: 3, minRewardRisk: 1.5 }
 exit:
+  onStress: { level: high, onlyIfDownward: true }
   stopLossPct: 5
   atProjectedHigh: { enabled: true, bufferPct: 0.5 }
   onCycleTurn: true

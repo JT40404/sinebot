@@ -11,7 +11,7 @@ import { checkEntry } from './strategy/rules.js';
 import { explain } from './strategy/explain.js';
 import { runBacktest, type BacktestResult } from './engine/backtest.js';
 import { runLive } from './engine/live.js';
-import { analyze, project, stft, persistence } from './fourier/index.js';
+import { analyze, project, stft, persistence, strengthLevel, STRENGTH_LABELS } from './fourier/index.js';
 
 const HELP = `sine-bot — Fourier-analysis trading bot for Solana tokens
 
@@ -136,6 +136,10 @@ async function main() {
       console.log(`Recovered:         ${a.peaks.map((p) => `${p.periodHours.toFixed(1)} h (±${(p.amp * 100).toFixed(1)}%)`).join(', ')}`);
       const pr = project(closes, dt, a.peaks[0].periodHours)!;
       console.log(`Projection skill:  ${pr.skill.toFixed(2)} vs "no change" · direction right ${Math.round((100 * pr.hits) / pr.checks)}% (${pr.tests} walk-forward tests)`);
+      console.log(`Rhythm vs. random walk: p = ${a.sig!.pTop.toFixed(3)} · mean reversion (Fourier KSS): p = ${a.sig!.pKss.toFixed(3)} · regime shift k* = ${a.trend.k}`);
+      let lpw = 0; const walk = Array.from({ length: N }, () => 100 * Math.exp((lpw += 0.01 * (rnd() + rnd() + rnd() + rnd() - 2) * 1.2)));
+      const aw = analyze(walk, dt);
+      console.log(`Pure random walk:  rhythm p = ${aw.sig!.pTop.toFixed(2)} (should be large) · strength "${STRENGTH_LABELS[strengthLevel(aw).level]}"`);
       for (const p of a.peaks) {
         const pe = persistence(stft(closes, dt, p.periodHours), p.periodHours);
         console.log(`Persistence ${p.periodHours.toFixed(1).padStart(5)} h: ${pe ? `present in ${Math.round(pe.share * 100)}% of the window` : 'too slow to check (repeats < 4× in the window)'}`);

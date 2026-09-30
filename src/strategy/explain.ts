@@ -11,6 +11,25 @@ export function explain(s: Snapshot, name = 'This token'): string[] {
   } else {
     out.push(`${name} has a ${s.strength.toLowerCase()} rhythm: about every ${dur(s.periodHours)} it swings ±${s.amplitudePct.toFixed(1)}% around its trend (${Math.round(s.explained * 100)}% of the movement; repeated ${s.cyclesSeen.toFixed(1)}×).`);
   }
+  const sg = s.significance, pct = (p: number) => (p < 0.01 ? 'under 1%' : `about ${Math.round(p * 100)}%`);
+  if (sg.pRhythm !== null && s.level > 0) {
+    out.push(sg.pRhythm <= 0.05
+      ? `Against 200 simulated random walks, a rhythm this distinct appeared by chance ${pct(sg.pRhythm)} of the time: statistically real.`
+      : `In 200 simulated random walks a rhythm this distinct appeared ${pct(sg.pRhythm)} of the time, so it is suggestive, not proven.`);
+  } else if (sg.pRhythm !== null && sg.pRhythm > 0.3) {
+    out.push(`Its swings are the kind a random walk makes by chance (${pct(sg.pRhythm)} of simulations): likely noise.`);
+  }
+  if (sg.pMeanReversion !== null) {
+    out.push(sg.pMeanReversion <= 0.05
+      ? `Price tends to pull back toward its trend (Fourier KSS p ${sg.pMeanReversion < 0.01 ? '< 0.01' : '≈ ' + sg.pMeanReversion.toFixed(2)}).`
+      : `Pull-back toward the trend is not clear (Fourier KSS p ≈ ${sg.pMeanReversion.toFixed(2)}): closer to a random walk.`);
+  }
+  if (sg.pRegimeShift !== null && sg.pRegimeShift <= 0.05) out.push(`A slow regime shift (≈${sg.regimeK.toFixed(1)} of a cycle) was removed before measuring rhythms.`);
+  if (s.stress) {
+    const st = s.stress, mv = st.lastMove * 100;
+    out.push(`Stress check: ${st.label}. Slow moves are ${Math.round(st.share * 100)}% of recent return energy (random churn ≈ ${Math.round(st.expected * 100)}%)` +
+      (st.level > 0 ? `, pressure ${mv >= 0 ? 'upward' : 'downward'} (${mv >= 0 ? '+' : ''}${mv.toFixed(1)}% over ${st.L} candles).` : '.'));
+  }
   if (s.persistence) {
     const p = s.persistence;
     out.push(`Over time it was clearly present in ${Math.round(p.share * 100)}% of the window${p.change >= 1.4 ? ' and has been strengthening' : p.change <= 0.7 ? ' and has been fading' : ''}.`);

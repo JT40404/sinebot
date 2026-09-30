@@ -1,6 +1,6 @@
 {
   "name": "sine-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Open-source Solana trading bot built on Fourier analysis of price rhythms, with fully configurable strategies.",
   "type": "module",
   "license": "MIT",

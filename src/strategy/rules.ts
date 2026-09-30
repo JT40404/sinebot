@@ -8,6 +8,14 @@ export function inPhaseWindow(x: number, from: number, to: number): boolean {
   return from <= to ? x >= from && x <= to : x >= from || x <= to;
 }
 
+const STRESS_RANK = { none: 99, elevated: 1, high: 2 } as const;
+/** True when the stress check is at/above `level` (and, optionally, the recent pressure is downward). */
+export function stressHit(s: Snapshot, level: 'none' | 'elevated' | 'high', onlyIfDownward: boolean): boolean {
+  if (!s.stress || level === 'none') return false;
+  return s.stress.level >= STRESS_RANK[level] && (!onlyIfDownward || s.stress.lastMove < 0);
+}
+const fp = (p: number) => (p < 0.01 ? '<0.01' : p.toFixed(2));
+
 export const roundTripCostPct = (cfg: Config) => (2 * (cfg.execution.feeBps + cfg.execution.expectedSlippageBps)) / 100;
 
 /** Entry: every enabled condition must pass. Reasons explain each failure (useful for tuning). */
@@ -15,6 +23,16 @@ export function checkEntry(s: Snapshot, cfg: Config): Decision {
   const e = cfg.entry, r: string[] = [];
   if (s.level < e.minStrength) r.push(`strength ${s.strength} < required ${e.minStrength}`);
   if (s.cyclesSeen < e.minCyclesSeen) r.push(`rhythm seen ${s.cyclesSeen.toFixed(1)}× < ${e.minCyclesSeen}`);
+
+  if (e.significance.maxP !== null && s.significance.pRhythm !== null && s.significance.pRhythm > e.significance.maxP) {
+    r.push(`rhythm could be chance: p ${fp(s.significance.pRhythm)} > ${e.significance.maxP} vs random walks`);
+  }
+  if (e.meanReversion.required && s.significance.pMeanReversion !== null && s.significance.pMeanReversion > e.meanReversion.maxP) {
+    r.push(`no mean reversion: Fourier KSS p ${fp(s.significance.pMeanReversion)} > ${e.meanReversion.maxP}`);
+  }
+  if (stressHit(s, e.stress.block, e.stress.onlyIfDownward)) {
+    r.push(`stress ${s.stress!.label.toLowerCase()}${s.stress!.lastMove < 0 ? ' with downward pressure' : ''}`);
+  }
 
   if (e.persistence.min !== null || e.persistence.requireStrengthening) {
     if (!s.persistence) r.push('main rhythm too slow for the persistence check');
@@ -88,6 +106,7 @@ export function signalExit(pos: Position, s: Snapshot | null, barsHeld: number, 
   if (!s) return null;
   if (cfg.exit.onCycleTurn && pos.entryPhase < 0.5 && s.phase.frac >= 0.5 && s.phase.frac <= 0.8 && barsHeld > 0) return 'cycle passed its crest';
   if (cfg.exit.onStrengthBelow !== null && s.level < cfg.exit.onStrengthBelow) return 'rhythm weakened';
+  if (stressHit(s, cfg.exit.onStress.level, cfg.exit.onStress.onlyIfDownward)) return `stress ${s.stress!.label.toLowerCase()}`;
   return null;
 }
 

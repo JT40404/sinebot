@@ -1,4 +1,4 @@
-import { analyze, strengthLevel, STRENGTH_LABELS, harmonicFit, stft, persistence, project, type Analysis } from '../fourier/index.js';
+import { analyze, strengthLevel, STRENGTH_LABELS, harmonicFit, stft, persistence, project, stressIndex, STRESS_LABELS, type Analysis, type Stress } from '../fourier/index.js';
 import { INTERVAL_HOURS, type Config } from '../config/schema.js';
 
 export interface Turning { price: number; pct: number; hours: number; bars: number; bandLow: number; bandHigh: number }
@@ -20,6 +20,8 @@ export interface Snapshot {
     tested: boolean; tests: number; skill: number; hitRate: number; horizonHours: number;
     high: Turning; low: Turning;
   } | null;
+  significance: { pRhythm: number | null; pMeanReversion: number | null; pRegimeShift: number | null; regimeK: number };
+  stress: (Stress & { label: string }) | null;
   analysis: Analysis;
 }
 
@@ -56,6 +58,14 @@ export function buildSnapshot(closes: number[], cfg: Config, needs = needsFor(cf
     hoursToTrough: (((3 * Math.PI - psi) % TWO_PI) / TWO_PI) * P,
   };
 
+  // Stress = slow pressure the rhythms DON'T explain: when a real rhythm is present (moderate+), subtract the
+  // fitted rhythms first, so a cycle's regular down-swings aren't mistaken for building pressure.
+  const stressInput = level >= 2 && model ? closes.map((c, n) => Math.exp(Math.log(c) - model.predict(n))) : closes;
+  const st = stressIndex(stressInput);
+  if (st && stressInput !== closes) {             // report the real price move over the stress window, not the residual's
+    const L = st.L; st.lastMove = closes[N - 1] / closes[Math.max(0, N - 1 - L)] - 1;
+  }
+
   let pers: Snapshot['persistence'] = null;
   if (needs.persistence) pers = persistence(stft(closes, dt, P), P);
 
@@ -86,6 +96,9 @@ export function buildSnapshot(closes: number[], cfg: Config, needs = needsFor(cf
     explained: a.explained, snr: a.snr, cyclesSeen, periodHours: P,
     amplitudePct: p0.amp * 100,
     trendPctPerDay: (Math.exp(a.trendB * (24 / dt)) - 1) * 100,
-    phase, persistence: pers, projection: proj, analysis: a,
+    phase, persistence: pers, projection: proj,
+    significance: { pRhythm: a.sig?.pTop ?? null, pMeanReversion: a.sig?.pKss ?? null, pRegimeShift: a.sig?.pBreak ?? null, regimeK: a.trend.k },
+    stress: st ? { ...st, label: STRESS_LABELS[st.level] } : null,
+    analysis: a,
   };
 }

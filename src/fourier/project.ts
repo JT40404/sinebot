@@ -22,7 +22,7 @@ function quantile(a: number[], q: number): number {
 
 /** Fit trend + rhythms to `prices` alone and extend H steps, pinned to the last close. */
 function forecastFrom(prices: number[], dtHours: number, H: number) {
-  const a = analyze(prices, dtHours, { nPeaks: 3 });
+  const a = analyze(prices, dtHours, { nPeaks: 3, skipNull: true, linearTrend: true });
   if (!a.peaks.length) return null;
   const y = prices.map(Math.log), last = y.length - 1;
   const model = harmonicFit(y, a.peaks.map((p) => dtHours / p.periodHours));

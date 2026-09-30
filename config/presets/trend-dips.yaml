@@ -3,11 +3,14 @@ extends: ../default
 name: trend-dips
 market: { interval: 1h, windowCandles: 512 }
 entry:
+  significance: { maxP: 0.15 }
+  stress: { block: high, onlyIfDownward: true }
   minStrength: 2
   trend: { minPctPerDay: 0.3 }
   phase: { from: 0.85, to: 0.25, requireRising: false }
   projection: { minSkill: 0.05, minHitRate: 0.5, minUpsidePct: 2, minRewardRisk: 1 }
 exit:
+  onStress: { level: high, onlyIfDownward: true }
   stopLossPct: 7
   trailingStopPct: 5
   atProjectedHigh: { enabled: false }

@@ -32,6 +32,37 @@ Given *N* closes (a power of two) with *Δt* hours between them:
 
 The rating is capped at 2 if the main rhythm repeated fewer than 3 times in the window, and at 1 if fewer than 2.
 
+## 1b. Is it just a random walk? (`analyze.ts`, new in 1.1)
+
+Following Öztürk (2025), who tested 25 cryptocurrencies against the random-walk null:
+
+1. **Fourier trend** (Enders & Lee, fractional frequency). The trend is `a + b·t + c·cos(2πk*t/N) + s·sin(2πk*t/N)`, with k\* ∈ {0.1 … 1.5} chosen by minimum SSR. It removes slow regime shifts before the spectrum, and stays below 1.5 cycles per window so it can't absorb a repeating rhythm. Projection fits keep a straight-line trend, because their shorter windows leave too few cycles to separate the two.
+2. **Prominence.** Each peak's power is divided by the median power of nearby frequencies. A real rhythm is a sharp spike; leftover trend is a broad slope.
+3. **Random-walk null.** 200 seeded random walks of the same length run through the identical pipeline, once per window size.
+   - The rhythm p-value compares a peak's prominence with the **maximum** prominence in each simulation, which corrects for "look everywhere and something stands out."
+   - The KSS and regime-shift p-values come from the same simulations.
+4. **Fourier KSS test** (Kapetanios, Shin & Snell 2003; Christopoulos & León-Ledesma 2010): `Δe_t = φ·e³_{t−1} + Σ α_j·Δe_{t−j}` on the Fourier-trend residuals, using the t-statistic of φ.
+5. **Ranking.** Significant rhythms with ≥ 3 cycles rank first, then significant 2-cycle swings, then the rest.
+6. **Strength cap from the rhythm p-value:** > 0.30 caps at 0 (none), > 0.15 at 1 (weak), > 0.05 at 2 (moderate).
+
+## 1c. Stress check (`stress.ts`, new in 1.1)
+
+Following Jun, Ahn, Kim & Kim (2019), who found low-frequency components of stock-index returns surging ahead of global financial crises:
+
+1. **Rolling spectrum.** A window of L = 32 log-returns (16 for short series) slides one step at a time, with an FFT at each step.
+2. **Statistic.** The share of return energy in the slowest L/8 modes. Random churn gives about 25%.
+3. **p-value.** A permutation test against the token's own returns in random order, 400 resamples, which keeps fat tails and removes timing.
+4. **History percentile.** Where the current reading sits within the window's own history.
+5. **Level:**
+
+| Level | Condition |
+|---|---|
+| High | p ≤ 0.05 and history percentile ≥ 80% |
+| Elevated | (p ≤ 0.10 or history percentile ≥ 90%) and share above 25% |
+| Calm | otherwise |
+
+When a real rhythm is present (moderate or better), stress is computed after subtracting the least-squares rhythm fit, so a regular cycle's down-swings don't count as building pressure.
+
 ## 2. Exact phase (`harmonics.ts`)
 
 With the frequencies known, a least-squares fit of `y[n] ≈ a + b·n/N + Σ (c_j·cos 2πf_j n + s_j·sin 2πf_j n)` recovers each rhythm's amplitude and phase exactly. The cycle position is `ψ = 2πf·(N−1) − atan2(s, c)`, reported as `phase = (ψ + π)/2π`: 0 is a trough and 0.5 a crest. The rhythm is rising while `ψ < 0`.

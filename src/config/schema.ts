@@ -54,6 +54,17 @@ export const ConfigSchema = z.object({
       minUpsidePct: z.number().min(0).default(2),
       minRewardRisk: z.number().min(0).default(1.2),
     }).default({}),
+    significance: z.object({                       // rhythm vs. random walks (Öztürk 2025 approach)
+      maxP: z.number().min(0).max(1).nullable().default(0.1),
+    }).default({}),
+    meanReversion: z.object({                      // Fourier KSS: does price pull back toward its trend?
+      required: z.boolean().default(false),
+      maxP: frac(0.1),
+    }).default({}),
+    stress: z.object({                             // low-frequency surge in returns (Jun et al. 2019)
+      block: z.enum(['none', 'elevated', 'high']).default('high'),
+      onlyIfDownward: z.boolean().default(true),
+    }).default({}),
     costMultiple: z.number().min(0).default(3),
   }).default({}),
 
@@ -65,6 +76,10 @@ export const ConfigSchema = z.object({
     onCycleTurn: z.boolean().default(true),
     onStrengthBelow: z.number().int().min(0).max(4).nullable().default(1),
     maxHoldCycles: z.number().positive().default(0.75),
+    onStress: z.object({
+      level: z.enum(['none', 'elevated', 'high']).default('none'),
+      onlyIfDownward: z.boolean().default(true),
+    }).default({}),
   }).default({}),
 
   sizing: z.object({
