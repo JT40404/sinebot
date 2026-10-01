@@ -1,8 +1,10 @@
-extends: presets/swing        # or conservative, trend-dips, scalper, default
+# Ready-made paper-trading test. Start it with:
+#   npm start -- --config config/paper-test.yaml
+extends: default
 name: paper-test
 market: { interval: 15m }
 watchlist:
-  - { mint: pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn, label: PUMP }
-  - { mint: So11111111111111111111111111111111111111112, label: SOL }
+  - { mint: JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN, label: JUP }
+  - { mint: DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263, label: BONK }
 execution: { mode: paper }
-backtest: { startingBalanceSol: 10 }   # your pretend paper balance
+backtest: { startingBalanceSol: 10 }   # pretend paper balance
